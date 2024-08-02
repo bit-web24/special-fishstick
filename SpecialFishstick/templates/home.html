@@ -1,0 +1,15 @@
+{% load static %}
+<!doctype html>
+<html>
+    <head>
+        <title>Cat Vs Dog Classification</title>
+        <link rel="stylesheet" href="{% static 'css/index.css' %}" />
+    </head>
+    <body>
+        <h1>Upload an Image</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %} {{ form.as_p }}
+            <button type="submit">Upload</button>
+        </form>
+    </body>
+</html>
