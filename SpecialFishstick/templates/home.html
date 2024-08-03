@@ -68,32 +68,103 @@
         #submit:hover {
             background-color: rgb(79, 166, 253);
         }
+
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #result-dog,
+        #result-cat {
+            border: 2px dotted grey;
+            height: 230px;
+            width: 200px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        #result-dog span,
+        #result-cat span {
+            background-color: black;
+            display: block;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            color: white;
+            height: 30px;
+            line-height: 30px;
+        }
+
+        #result-dog img,
+        #result-cat img {
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+            width: 200px;
+            height: 200px;
+        }
     </style>
 </head>
 
 <body>
     <h1 class="title">Cat Vs Dog Classification</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <label class="custom-file-upload">
-            <div id="imagePreview">
-                <img id="previewImage" src="" alt="Selected Image" style="max-width: 500px;">
-            </div>
-            <div id="upload">
-                <input type="file" name="image" id="id_image" accept="image/*" style="display:none;">
-                <span>Upload Image</span>
-            </div>
-        </label>
-        <span style="color: red;">
-            {{ form.image.errors }}
-        </span>
-        <button type="submit" id="submit">Submit</button>
-    </form>
-
+    <div id="container">
+        <div id="result-dog">
+            <span>Dog</span>
+            <img src="{% static 'images/dog_image.jpeg' %}" alt="Dog" />
+        </div>
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <label class="custom-file-upload">
+                <div id="imagePreview">
+                    <img id="previewImage" src="" alt="Selected Image" style="max-width: 500px;">
+                </div>
+                <div id="upload">
+                    <input type="file" name="image" id="id_image" accept="image/*" style="display:none;">
+                    <span>Upload Image</span>
+                </div>
+            </label>
+            <span style="color: red;">
+                {{ form.image.errors }}
+            </span>
+            <button type="submit" id="submit">Submit</button>
+        </form>
+        <div id="result-cat">
+            <span>Cat</span>
+            <img src="{% static 'images/cat_image.jpeg' %}" alt="Cat" />
+        </div>
+    </div>
     <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
         const fileInput = document.getElementById('id_image');
         const imagePreview = document.getElementById('imagePreview');
         const previewImage = document.getElementById('previewImage');
+        const uploadForm = document.getElementById('uploadForm');
+        const dogResultDiv = document.getElementById('result-dog');
+        const catResultDiv = document.getElementById('result-cat');
 
         fileInput.addEventListener('change', function (e) {
             if (this.files && this.files[0]) {
@@ -109,6 +180,48 @@
             } else {
                 imagePreview.style.display = 'none';
             }
+
+            dogResultDiv.innerHTML = `<span>Dog</span><img src="{% static 'images/dog_image.jpeg' %}" alt="Dog" />`;
+            catResultDiv.innerHTML = `<span>Cat</span><img src="{% static 'images/cat_image.jpeg' %}" alt="Cat" />`;
+
+            dog = dogResultDiv.querySelector('span');
+            dog.style.backgroundColor = 'black';
+            dogResultDiv.style.border = '2px dotted grey';
+
+            cat = catResultDiv.querySelector('span');
+            cat.style.backgroundColor = 'black';
+            catResultDiv.style.border = '2px dotted grey';
+        });
+
+        uploadForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(uploadForm);
+
+            fetch('{% url "home" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.predicted_label == 'cat') {
+                        cat = catResultDiv.querySelector('span');
+                        cat.style.backgroundColor = 'green';
+                        catResultDiv.style.border = '5px solid green';
+                    } else {
+                        dog = dogResultDiv.querySelector('span');
+                        dog.style.backgroundColor = 'green';
+                        dogResultDiv.style.border = '5px solid green';
+                    }
+                    console.log(`Prediction: ${data.predicted_label}`);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
         });
     </script>
 </body>

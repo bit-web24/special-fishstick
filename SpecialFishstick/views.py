@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.core.files.storage import FileSystemStorage
 from .forms import ImageUploadForm
@@ -37,13 +38,10 @@ def home(request):
             uploaded_file_path = fs.path(filename)
             predicted_label = predict(uploaded_file_path)
 
-            return render(request, 'prediction.html', {
-                'image': {
-                    'name': filename,
-                    'url': uploaded_file_url,
-                    },
-                'predicted_label': predicted_label,
-            })
+            # Check if the request is an AJAX request
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'predicted_label': predicted_label})
+
     else:
         form = ImageUploadForm()
 
